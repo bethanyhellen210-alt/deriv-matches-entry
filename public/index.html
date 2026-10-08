@@ -1509,11 +1509,11 @@ const MIN_TOP_MARGIN = 3;
 // MATCHES is the exact-last-digit contract, so use a stricter
 // confirmation gate. Never present a weak statistical fluctuation
 // as a "sure" entry.
-const MATCHES_MIN_TICKS = 100;
-const MATCHES_MIN_FULL_RATE = 18;
-const MATCHES_MIN_WINDOW_RATE = 20;
-const MATCHES_MIN_EDGE = 8;
-const MATCHES_MIN_MARGIN = 4;
+const MATCHES_MIN_TICKS = 60;
+const MATCHES_MIN_FULL_RATE = 15;
+const MATCHES_MIN_WINDOW_RATE = 15;
+const MATCHES_MIN_EDGE = 5;
+const MATCHES_MIN_MARGIN = 2;
 
 
 /* =========================================================
@@ -3337,12 +3337,7 @@ function analyzeForEntry() {
 
   else if (contract === "MATCHES") {
 
-    if (!matchesUnlocked) {
-      return;
-    }
-
-    candidates =
-      validatedRanked.slice(0, 1);
+    candidates = validatedRanked.slice(0, 1);
 
     analysisReason =
       "MATCHES requires one exact digit with strong, stable live evidence. No signal is shown until the stricter confirmation gate passes.";
@@ -3358,12 +3353,12 @@ function analyzeForEntry() {
    * than EVEN/ODD/OVER/UNDER/DIFFERS.
    *
    * We require:
-   * - 100+ live ticks
+   * * - 60+ live ticks
    * - the same leading digit in two consecutive 20-tick windows
-   * - >=20% in each window
-   * - >=18% across the full sample
-   * - >=8 percentage points above the 10% baseline
-   * - >=4 percentage points over the next candidate
+   * - >=15% in each window
+   * - >=15% across the full sample
+   * - >=5 percentage points above the 10% baseline
+   * - >=2 percentage points over the next candidate
    *
    * If any condition fails, MATCHES stays WAIT.
    */
