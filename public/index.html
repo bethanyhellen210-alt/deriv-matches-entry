@@ -816,6 +816,103 @@
       opacity: 0.7;
     }
 
+    /* Clean entry-engine UI */
+    .entry-engine {
+      width: min(440px, 100%);
+      margin: 28px auto 0;
+      padding: 24px;
+      background: rgba(7,14,25,.96);
+      border: 1px solid rgba(44,152,238,.18);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.35);
+    }
+
+    .engine-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing: 2px;
+      margin-bottom: 26px;
+    }
+
+    .entry-engine .field {
+      margin-bottom: 18px;
+    }
+
+    .entry-engine .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8da6c0;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: 1.8px;
+    }
+
+    .entry-engine select {
+      height: 50px;
+      border-radius: 10px;
+      background: #091525;
+      border: 1px solid rgba(44,152,238,.22);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .engine-start {
+      width: 100%;
+      height: 52px;
+      margin-top: 2px;
+      border-radius: 10px;
+      background: #1677c8;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+    }
+
+    .entry-signal {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .entry-signal-title {
+      color: #8da6c0;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: 2px;
+    }
+
+    .entry-signal .entry-center {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      width: 150px;
+      height: 150px;
+      margin: 20px auto 14px;
+      border-radius: 50%;
+    }
+
+    .entry-signal .entry-center-value {
+      font-size: 48px;
+    }
+
+    .entry-signal .entry-center-value.waiting {
+      font-size: 15px;
+      letter-spacing: 1px;
+    }
+
+    .entry-contract {
+      min-height: 18px;
+      color: #a9b8c8;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+    }
+
+    .engine-runtime {
+      display: none !important;
+    }
+
     .entry-box {
       border: 0;
       background: transparent;
@@ -1174,6 +1271,16 @@
         font-size: 15px;
       }
 
+      .entry-engine {
+        margin-top: 16px;
+        padding: 20px 16px;
+      }
+
+      .entry-signal .entry-center {
+        width: 132px;
+        height: 132px;
+      }
+
       .entry-dial {
         width: 290px;
         height: 290px;
@@ -1285,397 +1392,73 @@
 
   <main id="mainApp" class="hidden">
 
-    <!-- MARKET -->
+    <section class="entry-engine">
 
-    <section class="card">
+      <div class="engine-title">ENTRY ENGINE</div>
 
-      <div class="section-title">
-        SELECT MARKET
+      <div class="field">
+        <label for="marketSelect">MARKET SELECT</label>
+        <select id="marketSelect">
+          <option value="">Connecting to Deriv markets...</option>
+        </select>
       </div>
 
       <div class="field">
-        <select id="marketSelect">
-          <option value="">
-            Connecting to Deriv markets...
-          </option>
+        <label for="contractSelect">CONTRACT TYPE</label>
+        <select id="contractSelect">
+          <option value="EVEN">EVEN</option>
+          <option value="ODD">ODD</option>
+          <option value="OVER">OVER</option>
+          <option value="UNDER">UNDER</option>
+          <option value="DIFFERS">DIFFERS</option>
         </select>
       </div>
 
-      <div class="market-banner">
+      <button id="startButton" class="start engine-start">START</button>
 
-        <div>
-          <div
-            id="liveMarket"
-            class="live-market"
-          >
-            No market selected
-          </div>
-        </div>
-
-        <div
-          id="connectionStatus"
-          class="connection wait"
-        >
-          WAITING
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- CONTRACT -->
-
-    <section class="card">
-
-      <div class="section-title">
-        SELECT CONTRACT
-      </div>
-
-      <select id="contractSelect">
-
-        <option value="ODD">
-          ODD
-        </option>
-
-        <option value="EVEN">
-          EVEN
-        </option>
-
-        <option value="OVER">
-          OVER
-        </option>
-
-        <option value="UNDER">
-          UNDER
-        </option>
-
-        <option value="DIFFERS">
-          DIFFERS
-        </option>
-
-        <option
-          value="MATCHES"
-          id="matchesOption"
-          class="locked"
-        >
-          MATCHES 🔒
-        </option>
-
-      </select>
-
-
-      <div
-        id="barrierBox"
-        class="field hidden"
-        style="margin-top:12px"
-      >
-
-        <label>
-          Barrier Digit
-        </label>
-
-        <select id="barrierSelect">
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5" selected>5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-        </select>
-
-      </div>
-
-
-      <div
-        id="matchesUnlockBox"
-        class="hidden"
-        style="margin-top:15px"
-      >
-
-        <div class="muted">
-          MATCHES is a paid feature.
-          Contact ELISY 254 to activate it for
-          $40.
-        </div>
-
-        <div class="unlock-row">
-
-          <input
-            id="matchesCode"
-            placeholder="Activation code"
-            inputmode="numeric"
-          />
-
-          <button id="unlockMatches">
-            UNLOCK
-          </button>
-
-        </div>
-
-        <div
-          id="unlockMessage"
-          class="message"
-        ></div>
-
-      </div>
-
-
-      <div class="button-row">
-
-        <button
-          id="startButton"
-          class="start"
-        >
-          START
-        </button>
-
-        <button
-          id="stopButton"
-          class="stop"
-          disabled
-        >
-          STOP
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- MOMENTUM -->
-
-    <section class="card">
-
-      <div class="section-title">
-        LIVE DIGIT MOMENTUM
-      </div>
-
-      <div
-        id="momentumMarket"
-        class="muted"
-        style="margin-bottom:15px;font-size:12px;"
-      >
-        Waiting for market...
-      </div>
-
-      <div
-        id="momentumGrid"
-        class="momentum-grid"
-      ></div>
-
-    </section>
-
-
-    <!-- ENTRY -->
-
-    <section
-      id="entryCard"
-      class="card entry-box"
-    >
-
-      <div class="entry-status">
-        ENTRY SIGNAL
-      </div>
-
-      <div
-        id="entryContract"
-        class="entry-contract"
-      >
-        WAITING FOR CONFIRMED ENTRY
-      </div>
-
-      <div class="entry-dial" aria-label="Circular entry digit selector">
-        <div id="entryDigitsGrid" class="entry-digits-grid"></div>
+      <div class="entry-signal">
+        <div class="entry-signal-title">ENTRY SIGNAL</div>
 
         <div class="entry-center">
           <div class="entry-center-label" id="entryCenterLabel">ENTRY</div>
           <div class="entry-center-value waiting" id="entryCenterValue">WAIT</div>
         </div>
-      </div>
 
-      <div id="prediction" class="prediction hidden">—</div>
-
-      <div class="entry-note">
-        LIVE ENTRY DIGIT
-      </div>
-
-      <div
-        id="reason"
-        class="reason"
-      >
-        The analyzer will show suitable digit(s)
-        after enough live Deriv ticks are collected.
-      </div>
-
-      <div
-        id="manualHelp"
-        class="manual-help"
-      >
-        No manual entry yet.
-      </div>
-
-      <button
-        id="manualTradeButton"
-        class="manual"
-        disabled
-      >
-        MANUAL TRADE
-      </button>
-
-      <div
-        id="timer"
-        class="timer"
-      >
-
-        <div class="timer-label">
-          ENTRY TIME
+        <div id="entryContract" class="entry-contract">
+          WAITING FOR SIGNAL
         </div>
-
-        <div
-          id="timerValue"
-          class="timer-value"
-        >
-          —
-        </div>
-
       </div>
 
-    </section>
-
-
-    <!-- DON'T TRADE -->
-
-    <section
-      id="dontTrade"
-      class="dont-trade"
-    >
-
-      <div class="dont-title">
-        🚫 DON'T TRADE
+      <div id="connectionStatus" class="connection wait">
+        WAITING FOR DERIV
       </div>
 
-      <div
-        id="dontMessage"
-        class="dont-message"
-      >
-        Wait for a new confirmed signal.
+      <!-- Runtime-only elements required by the live engine. They have no UI. -->
+      <div class="engine-runtime" aria-hidden="true">
+        <div id="liveMarket"></div>
+        <div id="momentumMarket"></div>
+        <div id="momentumGrid"></div>
+        <div id="entryDigitsGrid"></div>
+        <div id="prediction"></div>
+        <div id="reason"></div>
+        <div id="manualHelp"></div>
+        <button id="manualTradeButton" disabled></button>
+        <div id="timer"><div id="timerValue"></div></div>
+        <div id="dontTrade"><div id="dontMessage"></div></div>
+        <div id="tickCount"></div>
+        <div id="lastDigit"></div>
+        <div id="analysisScore"></div>
+        <div id="digitHistory"></div>
+        <div id="tradeHistory"></div>
+        <div id="barrierBox"></div>
+        <select id="barrierSelect"><option value="5">5</option></select>
+        <div id="matchesUnlockBox"></div>
+        <button id="unlockMatches"></button>
+        <input id="matchesCode" />
+        <div id="unlockMessage"></div>
+        <option id="matchesOption"></option>
+        <button id="stopButton" disabled>STOP</button>
       </div>
-
-    </section>
-
-
-    <!-- ANALYSIS -->
-
-    <section class="card">
-
-      <div class="section-title">
-        LIVE ANALYSIS
-      </div>
-
-      <div class="stats">
-
-        <div class="stat">
-
-          <div
-            id="tickCount"
-            class="stat-number"
-          >
-            0
-          </div>
-
-          <div class="stat-label">
-            LIVE TICKS
-          </div>
-
-        </div>
-
-
-        <div class="stat">
-
-          <div
-            id="lastDigit"
-            class="stat-number"
-          >
-            —
-          </div>
-
-          <div class="stat-label">
-            LAST DIGIT
-          </div>
-
-        </div>
-
-
-        <div class="stat">
-
-          <div
-            id="analysisScore"
-            class="stat-number"
-          >
-            —
-          </div>
-
-          <div class="stat-label">
-            ANALYSIS SCORE
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- HISTORY -->
-
-    <section class="card">
-
-      <div class="section-title">
-        DIGIT HISTORY
-      </div>
-
-      <div
-        id="digitHistory"
-        class="muted"
-      >
-        No ticks yet.
-      </div>
-
-    </section>
-
-
-    <!-- TRADE HISTORY -->
-
-    <section class="card">
-
-      <div class="section-title">
-        MANUAL TRADE HISTORY
-      </div>
-
-      <div id="tradeHistory">
-        No manual trades recorded.
-      </div>
-
-    </section>
-
-
-    <!-- WHATSAPP -->
-
-    <section class="card">
-
-      <a
-        class="whatsapp"
-        href="https://wa.me/254701859605"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        CONTACT ELISY 254 ON WHATSAPP
-      </a>
 
     </section>
 
