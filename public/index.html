@@ -1411,6 +1411,7 @@
           <option value="OVER">OVER</option>
           <option value="UNDER">UNDER</option>
           <option value="DIFFERS">DIFFERS</option>
+          <option value="MATCHES">MATCHES</option>
         </select>
       </div>
 
@@ -2177,6 +2178,9 @@ function handleServerMessage(data) {
     resetAnalysis();
 
     startButton.disabled = false;
+    startButton.textContent = "START";
+    startButton.classList.remove("stop");
+    startButton.classList.add("start");
     stopButton.disabled = true;
 
     marketSelect.disabled = false;
@@ -2326,11 +2330,13 @@ marketSelect.addEventListener(
 
       try {
 
-        socket.send(
-          JSON.stringify({
-            action: "stop"
-          })
-        );
+        if (currentSymbol) {
+          socket.send(
+            JSON.stringify({
+              forget_all: "ticks"
+            })
+          );
+        }
 
       } catch {}
     }
@@ -2382,21 +2388,6 @@ contractSelect.addEventListener(
 
     const newContract =
       contractSelect.value;
-
-    if (
-      newContract === "MATCHES" &&
-      !matchesUnlocked
-    ) {
-
-      matchesUnlockBox.classList.remove(
-        "hidden"
-      );
-
-      contractSelect.value =
-        currentContract;
-
-      return;
-    }
 
     currentContract =
       newContract;
@@ -2578,51 +2569,32 @@ startButton.addEventListener(
 
     prepareAudio();
 
+    /*
+     * One button controls the whole engine:
+     * START when stopped, STOP when running.
+     */
+    if (running) {
+      stopMarket();
+      return;
+    }
+
     const market =
       marketSelect.value;
 
     if (!market) {
-
-      alert(
-        "Please select a market."
-      );
-
+      alert("Please select a market.");
       return;
     }
-
-
-    if (
-      contractSelect.value ===
-        "MATCHES" &&
-      !matchesUnlocked
-    ) {
-
-      matchesUnlockBox.classList.remove(
-        "hidden"
-      );
-
-      return;
-    }
-
-
-    /*
-     * IMPORTANT FIX:
-     *
-     * Do NOT wait a fixed 500ms.
-     * Wait for the actual WebSocket OPEN event.
-     */
 
     if (
       !socket ||
       socket.readyState !== WebSocket.OPEN
     ) {
-
       pendingStart = true;
-
       connectBrowserSocket();
 
       setConnectionStatus(
-        "WAITING FOR SERVER",
+        "CONNECTING TO DERIV",
         "wait"
       );
 
@@ -2630,10 +2602,60 @@ startButton.addEventListener(
     }
 
     startMarket();
-
   }
 );
 
+
+function stopMarket() {
+
+  pendingStart = false;
+  running = false;
+
+  stopCurrentSignal();
+  clearTimer();
+  resetAnalysis();
+
+  setEntryDigitAnimation(false);
+  clearEntryDigitHighlights();
+
+  if (
+    socket &&
+    socket.readyState === WebSocket.OPEN &&
+    currentSymbol
+  ) {
+    try {
+      socket.send(JSON.stringify({
+        forget_all: "ticks"
+      }));
+    } catch (error) {
+      console.error("Deriv stop error:", error);
+    }
+  }
+
+  currentSymbol = "";
+
+  startButton.disabled = false;
+  startButton.textContent = "START";
+  startButton.classList.remove("stop");
+  startButton.classList.add("start");
+
+  stopButton.disabled = true;
+
+  marketSelect.disabled = false;
+  contractSelect.disabled = false;
+
+  setConnectionStatus(
+    socket && socket.readyState === WebSocket.OPEN
+      ? "DERIV CONNECTED"
+      : "DISCONNECTED FROM DERIV",
+    socket && socket.readyState === WebSocket.OPEN
+      ? "live"
+      : "wait"
+  );
+
+  setEntryCenter("ENTRY", "WAIT", false);
+  entryContract.textContent = "WAITING FOR SIGNAL";
+}
 
 /* =========================================================
    START MARKET
@@ -2684,8 +2706,11 @@ function startMarket() {
 
   pendingStart = false;
 
-  startButton.disabled = true;
-  stopButton.disabled = false;
+  startButton.disabled = false;
+  startButton.textContent = "STOP";
+  startButton.classList.remove("start");
+  startButton.classList.add("stop");
+  stopButton.disabled = true;
 
   marketSelect.disabled = true;
   contractSelect.disabled = true;
