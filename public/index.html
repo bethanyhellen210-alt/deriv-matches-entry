@@ -1244,7 +1244,7 @@ async function login() {
    BROWSER WEBSOCKET
 ========================================================= */
 
-function connectBrowserSocket() {
+async function connectBrowserSocket() {
 
   if (!loggedIn) {
     return;
@@ -1261,7 +1261,6 @@ function connectBrowserSocket() {
   }
 
   intentionalSocketClose = false;
-
   clearTimeout(reconnectTimer);
 
   setConnectionStatus(
@@ -1269,15 +1268,41 @@ function connectBrowserSocket() {
     "wait"
   );
 
-  let protocol =
-    location.protocol === "https:"
-      ? "wss"
-      : "ws";
+  try {
+    /*
+     * The server requires a short-lived one-time
+     * WebSocket token. Do not connect to the host root.
+     */
+    const tokenResponse = await fetch("/api/ws-token", {
+      credentials: "same-origin"
+    });
 
-  socket =
-    new WebSocket(
-      `${protocol}://${location.host}`
+    const tokenData = await tokenResponse.json().catch(() => ({}));
+
+    if (!tokenResponse.ok || !tokenData.token) {
+      throw new Error(
+        tokenData.message || "Could not create WebSocket token."
+      );
+    }
+
+    const protocol =
+      location.protocol === "https:"
+        ? "wss"
+        : "ws";
+
+    socket = new WebSocket(
+      `${protocol}://${location.host}/ws?token=${encodeURIComponent(tokenData.token)}`
     );
+  } catch (error) {
+    console.error("WebSocket setup error:", error);
+
+    setConnectionStatus(
+      "CONNECTION ERROR",
+      "wait"
+    );
+
+    return;
+  }
 
   socket.addEventListener("open", () => {
 
@@ -1366,13 +1391,11 @@ function connectBrowserSocket() {
 
     }
 
-    if (
-      loggedIn &&
-      !intentionalSocketClose
-    ) {
-
-      scheduleReconnect();
-    }
+    /*
+     * No automatic reconnect loop.
+     * The user can press START again after a real
+     * connection failure.
+     */
 
   });
 
