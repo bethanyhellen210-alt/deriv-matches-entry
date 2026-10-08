@@ -3,6 +3,7 @@ const session = require("express-session");
 const http = require("http");
 const WebSocket = require("ws");
 const crypto = require("crypto");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -68,7 +69,13 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
-app.use(express.static("public"));
+const PUBLIC_DIR = path.join(__dirname, "public");
+
+app.use(express.static(PUBLIC_DIR));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
+});
 
 /*
 |--------------------------------------------------------------------------
