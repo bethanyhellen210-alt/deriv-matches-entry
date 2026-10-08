@@ -395,6 +395,144 @@
       margin-bottom: 12px;
     }
 
+    .landing-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 16px 44px;
+      text-align: center;
+    }
+
+    .robot {
+      position: relative;
+      width: 132px;
+      height: 150px;
+      margin-bottom: 18px;
+    }
+
+    .robot-antenna {
+      width: 4px;
+      height: 22px;
+      background: #d8b45a;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .robot-antenna::after {
+      content: "";
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f2d47c;
+      left: -2.5px;
+      top: -5px;
+      box-shadow: 0 0 14px rgba(242,212,124,.7);
+    }
+
+    .robot-head {
+      width: 108px;
+      height: 76px;
+      margin: 0 auto;
+      border: 2px solid #d8b45a;
+      border-radius: 18px;
+      background: #101010;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      position: relative;
+      box-shadow: 0 0 28px rgba(216,180,90,.12);
+    }
+
+    .robot-eye {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #f2d47c;
+      box-shadow: 0 0 12px rgba(242,212,124,.8);
+    }
+
+    .robot-mouth {
+      position: absolute;
+      width: 30px;
+      height: 7px;
+      border-bottom: 2px solid #d8b45a;
+      bottom: 14px;
+      left: 37px;
+    }
+
+    .robot-body {
+      width: 82px;
+      height: 48px;
+      margin: 6px auto 0;
+      border: 2px solid #d8b45a;
+      border-radius: 12px;
+      background: #0b0b0b;
+      padding: 9px;
+    }
+
+    .robot-panel {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(216,180,90,.35);
+      border-radius: 6px;
+    }
+
+    .landing-title {
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 1000;
+      letter-spacing: 2px;
+      color: #f2d47c;
+    }
+
+    .landing-subtitle {
+      margin-top: 5px;
+      margin-bottom: 24px;
+      color: #888;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .landing-screen .login-card {
+      width: min(420px, 100%);
+      margin: 0;
+      text-align: left;
+      background: rgba(10,10,10,.96);
+      border: 1px solid rgba(216,180,90,.22);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .landing-screen .login-card .section-title {
+      color: #d8b45a;
+      opacity: 1;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .landing-screen .field label {
+      color: #999;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      font-weight: 900;
+    }
+
+    .landing-screen input {
+      background: #080808;
+      border-color: #292929;
+    }
+
+    .landing-screen .open-analyzer {
+      width: 100%;
+      margin-top: 4px;
+      background: #d8b45a;
+      color: #080808;
+    }
+
     .login-card {
       max-width: 460px;
       margin: 30px auto;
@@ -814,45 +952,51 @@
 
   <!-- LOGIN -->
 
-  <section id="loginSection" class="card login-card">
+  <section id="loginSection" class="landing-screen">
 
-    <div class="login-heading">
-      <div>
-        <div class="section-title">PRIVATE ACCESS</div>
-        <h2>Open your analyzer</h2>
-        <p>Enter your access details to continue to the live market engine.</p>
+    <div class="robot" aria-label="ELISY robot">
+      <div class="robot-antenna"></div>
+      <div class="robot-head">
+        <div class="robot-eye"></div>
+        <div class="robot-eye"></div>
+        <div class="robot-mouth"></div>
       </div>
-      <div class="access-icon">↗</div>
+      <div class="robot-body">
+        <div class="robot-panel"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>MARKET ACCESS</label>
-      <input
-        id="loginMarket"
-        placeholder="Enter Market"
-        autocomplete="username"
-      />
+    <div class="landing-title">ELISY 254</div>
+    <div class="landing-subtitle">DERIV LIVE ENTRY ENGINE</div>
+
+    <div class="login-card">
+      <div class="section-title">SIGN IN</div>
+
+      <div class="field">
+        <label>USER</label>
+        <input
+          id="loginMarket"
+          placeholder="Enter user"
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="field">
+        <label>PASSWORD</label>
+        <input
+          id="loginPassword"
+          type="password"
+          placeholder="Enter password"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button id="loginButton" class="open-analyzer">
+        SIGN IN
+      </button>
+
+      <div id="loginMessage" class="message"></div>
     </div>
-
-    <div class="field">
-      <label>ACCESS PASSWORD</label>
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Enter Password"
-        autocomplete="current-password"
-      />
-    </div>
-
-    <button id="loginButton" class="open-analyzer">
-      ENTER LIVE ANALYZER <span>→</span>
-    </button>
-
-    <div class="secure-note">
-      <span>●</span> LIVE CONNECTION • DERIV MARKET DATA
-    </div>
-
-    <div id="loginMessage" class="message"></div>
 
   </section>
 
