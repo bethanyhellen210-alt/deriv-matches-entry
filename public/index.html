@@ -1715,9 +1715,12 @@ let reconnectAttempts = 0;
 let pendingStart = false;
 let intentionalSocketClose = false;
 
-const MAX_DIGITS = 60;
-const MIN_TICKS_FOR_ANALYSIS = 20;
-const SIGNAL_SCORE_THRESHOLD = 72;
+const MAX_DIGITS = 100;
+const MIN_TICKS_FOR_ANALYSIS = 60;
+const SIGNAL_SCORE_THRESHOLD = 82;
+const MIN_TOP_DIGIT_RATE = 16;
+const MIN_EDGE_OVER_BASE = 5;
+const MIN_TOP_MARGIN = 3;
 
 
 /* =========================================================
@@ -3296,6 +3299,59 @@ function analyzeForEntry() {
           b.score - a.score
       );
 
+  // Conservative anti-fake-entry gate:
+  // a signal must come from a real, sufficiently large live sample,
+  // show a meaningful edge over the 10% digit baseline, and have
+  // separation from the next candidate.
+  if (digits.length < MIN_TICKS_FOR_ANALYSIS) {
+    return;
+  }
+
+  const fullCounts = Array(10).fill(0);
+  digits.forEach(d => {
+    if (Number.isInteger(d) && d >= 0 && d <= 9) fullCounts[d]++;
+  });
+
+  const fullRates = fullCounts.map(
+    count => (count / digits.length) * 100
+  );
+
+  const recent = digits.slice(-20);
+  const previous = digits.slice(-40, -20);
+
+  if (recent.length < 20 || previous.length < 20) {
+    return;
+  }
+
+  const recentCounts = Array(10).fill(0);
+  const previousCounts = Array(10).fill(0);
+
+  recent.forEach(d => recentCounts[d]++);
+  previous.forEach(d => previousCounts[d]++);
+
+  const recentRates = recentCounts.map(c => (c / recent.length) * 100);
+  const previousRates = previousCounts.map(c => (c / previous.length) * 100);
+
+  // Require the same leading digit to remain present across
+  // consecutive live windows. This prevents a single burst of
+  // ticks from being presented as a prediction.
+  const stableDigits = new Set(
+    recentRates
+      .map((rate, digit) => ({ rate, digit }))
+      .filter(x => x.rate >= MIN_TOP_DIGIT_RATE)
+      .map(x => x.digit)
+  );
+
+  const stableCandidates = ranked.filter(item =>
+    stableDigits.has(item.digit) &&
+    previousRates[item.digit] >= MIN_TOP_DIGIT_RATE &&
+    fullRates[item.digit] >= MIN_TOP_DIGIT_RATE
+  );
+
+  if (!stableCandidates.length) {
+    return;
+  }
+
 
   const contract =
     contractSelect.value;
@@ -3304,11 +3360,15 @@ function analyzeForEntry() {
   let candidates = [];
   let analysisReason = "";
 
+  // Start from the statistically validated live candidates, not
+  // from an arbitrary digit.
+  const validatedRanked = stableCandidates;
+
 
   if (contract === "ODD") {
 
     candidates =
-      ranked.filter(
+      validatedRanked.filter(
         item =>
           item.digit % 2 === 1
       );
@@ -3321,7 +3381,7 @@ function analyzeForEntry() {
   else if (contract === "EVEN") {
 
     candidates =
-      ranked.filter(
+      validatedRanked.filter(
         item =>
           item.digit % 2 === 0
       );
@@ -3339,7 +3399,7 @@ function analyzeForEntry() {
       );
 
     candidates =
-      ranked.filter(
+      validatedRanked.filter(
         item =>
           item.digit > barrier
       );
@@ -3357,7 +3417,7 @@ function analyzeForEntry() {
       );
 
     candidates =
-      ranked.filter(
+      validatedRanked.filter(
         item =>
           item.digit < barrier
       );
@@ -3370,7 +3430,7 @@ function analyzeForEntry() {
   else if (contract === "DIFFERS") {
 
     candidates =
-      ranked.slice(0, 4);
+      validatedRanked.slice(0, 4);
 
     analysisReason =
       "These digits currently show the strongest live momentum candidates for a DIFFERS setup.";
@@ -3384,7 +3444,7 @@ function analyzeForEntry() {
     }
 
     candidates =
-      ranked.slice(0, 3);
+      validatedRanked.slice(0, 3);
 
     analysisReason =
       "These digits currently have the strongest live momentum for a MATCHES setup.";
@@ -3413,6 +3473,18 @@ function analyzeForEntry() {
       ? strongest.score - second.score
       : strongest.score;
 
+  const strongestRate = fullRates[strongest.digit];
+  const secondRate = second ? fullRates[second.digit] : 0;
+  const edgeOverBaseline = strongestRate - 10;
+
+  if (
+    strongestRate < MIN_TOP_DIGIT_RATE ||
+    edgeOverBaseline < MIN_EDGE_OVER_BASE ||
+    (second && strongestRate - secondRate < MIN_TOP_MARGIN)
+  ) {
+    return;
+  }
+
 
   const score =
     Math.min(
@@ -3421,7 +3493,8 @@ function analyzeForEntry() {
         50,
         50 +
         strongest.score * 1.7 +
-        separation * 0.8
+        separation * 0.8 +
+        edgeOverBaseline * 1.5
       )
     );
 
