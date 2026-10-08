@@ -1418,7 +1418,7 @@
       <button id="startButton" class="start engine-start">START</button>
 
       <div class="entry-signal">
-        <div class="entry-signal-title">ENTRY SIGNAL</div>
+        <div class="entry-signal-title" id="entrySignalTitle">ENTRY SIGNAL</div>
 
         <div class="entry-center">
           <div class="entry-center-label" id="entryCenterLabel">ENTRY</div>
@@ -3608,6 +3608,13 @@ function createEntrySignal({
   analysisScore.textContent =
     score.toFixed(0);
 
+  const entrySignalTitle =
+    document.getElementById("entrySignalTitle");
+
+  if (entrySignalTitle) {
+    entrySignalTitle.textContent = "GIVE ENTRY";
+  }
+
 
   if (contract === "OVER" || contract === "UNDER") {
     const barrier = predictedDigits[0];
@@ -3911,6 +3918,13 @@ function resetEntryBox() {
   clearEntryDigitHighlights();
   setEntryDigitAnimation(running);
 
+  const entrySignalTitle =
+    document.getElementById("entrySignalTitle");
+
+  if (entrySignalTitle) {
+    entrySignalTitle.textContent = "ENTRY SIGNAL";
+  }
+
   entryContract.textContent =
     "WAITING FOR CONFIRMED ENTRY";
 
@@ -3932,6 +3946,13 @@ function resetEntryBoxOnly() {
 
   clearEntryDigitHighlights();
   setEntryDigitAnimation(false);
+
+  const entrySignalTitle =
+    document.getElementById("entrySignalTitle");
+
+  if (entrySignalTitle) {
+    entrySignalTitle.textContent = "ENTRY SIGNAL";
+  }
 
   entryContract.textContent =
     "ENTRY FINISHED";
