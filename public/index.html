@@ -1923,28 +1923,19 @@ async function connectBrowserSocket() {
 
   intentionalSocketClose = false;
   clearTimeout(reconnectTimer);
-  setConnectionStatus("CONNECTING", "wait");
+  setConnectionStatus("CONNECTING TO DERIV", "wait");
 
   try {
-    const tokenResponse = await fetch("/api/ws-token", {
-      credentials: "same-origin"
-    });
-    const tokenData = await tokenResponse.json().catch(() => ({}));
-
-    if (!tokenResponse.ok || !tokenData.token) {
-      throw new Error(
-        tokenData.message || "Could not create WebSocket token."
-      );
-    }
-
-    const protocol =
-      location.protocol === "https:" ? "wss" : "ws";
-
+    /*
+     * Use Deriv's public market-data WebSocket directly.
+     * This avoids the browser -> Vercel -> Node -> Deriv WebSocket
+     * hop, which is unreliable on serverless hosting.
+     */
     socket = new WebSocket(
-      `${protocol}://${location.host}/ws?token=${encodeURIComponent(tokenData.token)}`
+      "wss://api.derivws.com/trading/v1/options/ws/public"
     );
   } catch (error) {
-    console.error("WebSocket setup error:", error);
+    console.error("Deriv WebSocket setup error:", error);
     setConnectionStatus("CONNECTION ERROR", "wait");
     return;
   }
@@ -1953,32 +1944,25 @@ async function connectBrowserSocket() {
 
     reconnectAttempts = 0;
 
-    setConnectionStatus(
-      "SERVER CONNECTED",
-      "live"
-    );
+    setConnectionStatus("DERIV CONNECTED", "live");
 
     try {
-      socket.send(
-        JSON.stringify({
-          action: "markets"
-        })
-      );
+      socket.send(JSON.stringify({
+        active_symbols: "brief",
+        req_id: 1
+      }));
 
       if (pendingStart) {
         pendingStart = false;
-
         setTimeout(() => {
-          if (
-            socket &&
-            socket.readyState === WebSocket.OPEN
-          ) {
+          if (socket && socket.readyState === WebSocket.OPEN) {
             startMarket();
           }
         }, 0);
       }
     } catch (error) {
-      console.error("Socket open/send error:", error);
+      console.error("Deriv socket send error:", error);
+      setConnectionStatus("CONNECTION ERROR", "wait");
     }
   });
 
@@ -1988,45 +1972,112 @@ async function connectBrowserSocket() {
     try {
       data = JSON.parse(event.data);
     } catch (error) {
-      console.warn("Invalid WebSocket message:", event.data);
+      console.warn("Invalid Deriv WebSocket message:", event.data);
       return;
     }
 
-    handleServerMessage(data);
+    /*
+     * Convert Deriv's native messages into the small internal
+     * messages already used by the entry engine.
+     */
+    if (data.msg_type === "active_symbols") {
+      const symbols = Array.isArray(data.active_symbols)
+        ? data.active_symbols
+        : [];
+
+      const markets = symbols
+        .filter(item => {
+          const name = String(item.underlying_symbol_name || "");
+          return /volatility|jump/i.test(name);
+        })
+        .filter(item => item.underlying_symbol)
+        .filter(item => item.is_trading_suspended !== 1)
+        .map(item => ({
+          name: item.underlying_symbol_name,
+          symbol: item.underlying_symbol,
+          pipSize: Number(item.pip_size || 0),
+          precision: Number.isFinite(Number(item.pip_size))
+            ? Math.max(0, Math.min(Math.round(-Math.log10(Number(item.pip_size))), 10))
+            : null
+        }))
+        .sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric:true, sensitivity:"base"}));
+
+      populateMarkets(markets);
+
+      if (pendingStart) {
+        pendingStart = false;
+        setTimeout(() => startMarket(), 0);
+      }
+
+      return;
+    }
+
+    if (data.msg_type === "tick" && data.tick) {
+      const tick = data.tick;
+
+      if (
+        !running ||
+        !currentSymbol ||
+        tick.symbol !== currentSymbol
+      ) {
+        return;
+      }
+
+      processTick({
+        type: "tick",
+        market: currentMarket,
+        symbol: tick.symbol,
+        quote: tick.quote,
+        epoch: tick.epoch,
+        pipSize: Number(tick.pip_size || 0),
+        precision: Number.isFinite(Number(tick.pip_size))
+          ? Math.max(0, Math.min(Math.round(-Math.log10(Number(tick.pip_size))), 10))
+          : null
+      });
+
+      return;
+    }
+
+    if (data.msg_type === "error" || data.error) {
+      console.error("Deriv API error:", data.error || data);
+      running = false;
+      currentSymbol = "";
+      stopCurrentSignal();
+      clearTimer();
+      startButton.disabled = false;
+      marketSelect.disabled = false;
+      contractSelect.disabled = false;
+      setConnectionStatus("DERIV ERROR", "wait");
+      showDontTrade(
+        (data.error && data.error.message) ||
+        "Deriv market data connection error."
+      );
+      return;
+    }
+
+    if (data.subscription && data.subscription.id && data.msg_type === "tick") {
+      return;
+    }
   });
 
   socket.addEventListener("close", () => {
-
-    setConnectionStatus(
-      "DISCONNECTED",
-      "wait"
-    );
-
+    setConnectionStatus("DISCONNECTED FROM DERIV", "wait");
     currentSymbol = "";
 
     if (running) {
-      showDontTrade(
-        "Connection lost. Don't trade until the live market connection returns."
-      );
-
+      running = false;
+      showDontTrade("Deriv connection lost. Press START to reconnect.");
       stopCurrentSignal();
       clearTimer();
+      startButton.disabled = false;
+      marketSelect.disabled = false;
+      contractSelect.disabled = false;
     }
-
-    /*
-     * Deliberately no automatic reconnect.
-     * A new connection is made only by an explicit
-     * user action such as START.
-     */
   });
 
   socket.addEventListener("error", (error) => {
-    console.error("Browser WebSocket error:", error);
-
-    setConnectionStatus(
-      "CONNECTION ERROR",
-      "wait"
-    );
+    console.error("Deriv WebSocket error:", error);
+    setConnectionStatus("CONNECTION ERROR", "wait");
   });
 }
 
@@ -2654,12 +2705,42 @@ function startMarket() {
 
 
   try {
+    const selectedOption =
+      marketSelect.options[marketSelect.selectedIndex];
+
+    const symbol =
+      selectedOption?.dataset?.symbol || "";
+
+    if (!symbol) {
+      throw new Error("Deriv market symbol is not available yet.");
+    }
+
+    currentSymbol = symbol;
+
+    currentMarket = market;
+
+    setConnectionStatus(
+      "SUBSCRIBING TO DERIV",
+      "wait"
+    );
 
     socket.send(
       JSON.stringify({
-        action: "start",
-        marketName: market
+        ticks: symbol,
+        subscribe: 1,
+        req_id: Date.now()
       })
+    );
+
+    liveMarket.textContent =
+      "LIVE • " + market;
+
+    momentumMarket.textContent =
+      "Live ticks from " + market;
+
+    setConnectionStatus(
+      "DERIV LIVE",
+      "live"
     );
 
   } catch (error) {
