@@ -11,6 +11,328 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --gold: #d8b45a;
+      --gold-bright: #f2d47c;
+      --ink: #050505;
+      --panel: rgba(13, 13, 13, 0.92);
+      --line: rgba(216,180,90,0.22);
+      --soft: #a8a8a8;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 50% -15%, rgba(216,180,90,0.13), transparent 42%),
+        #050505;
+      color: #f7f7f7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    .app {
+      width: min(1080px, 92%);
+      padding: 24px 0 44px;
+    }
+
+    .hero {
+      position: relative;
+      padding: 18px 4px 26px;
+      margin-bottom: 6px;
+    }
+
+    .hero::after {
+      content: "";
+      display: block;
+      width: 110px;
+      height: 2px;
+      margin-top: 26px;
+      background: var(--gold);
+      box-shadow: 0 0 18px rgba(216,180,90,.45);
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-weight: 1000;
+      letter-spacing: -1px;
+      font-size: 15px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      color: #d6d6d6;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+    }
+
+    .live-pill span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #62e59a;
+      box-shadow: 0 0 10px rgba(98,229,154,.65);
+    }
+
+    .hero-copy {
+      max-width: 780px;
+      padding: 56px 0 8px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin-bottom: 15px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(40px, 8vw, 78px);
+      line-height: .94;
+      letter-spacing: -3px;
+      font-weight: 950;
+    }
+
+    .hero h1 strong {
+      color: var(--gold-bright);
+      font-weight: 950;
+    }
+
+    .hero-copy p {
+      max-width: 600px;
+      margin: 22px 0 0;
+      color: #9d9d9d;
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .hero-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 680px;
+      margin-top: 32px;
+      border-top: 1px solid rgba(255,255,255,.09);
+      border-bottom: 1px solid rgba(255,255,255,.09);
+    }
+
+    .hero-features div {
+      padding: 14px 16px;
+      border-right: 1px solid rgba(255,255,255,.09);
+    }
+
+    .hero-features div:last-child {
+      border-right: 0;
+    }
+
+    .hero-features b {
+      display: block;
+      color: var(--gold);
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+
+    .hero-features span {
+      color: #cfcfcf;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+    }
+
+    .landing-login {
+      max-width: 560px;
+      margin: 34px 0 0 auto;
+      padding: 28px;
+      background: rgba(10,10,10,.96);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      box-shadow: 0 28px 80px rgba(0,0,0,.55);
+    }
+
+    .login-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .login-heading h2 {
+      margin: -3px 0 6px;
+      font-size: 25px;
+      letter-spacing: -.5px;
+    }
+
+    .login-heading p {
+      margin: 0;
+      color: #777;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .access-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      color: var(--gold);
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+
+    .landing-login .section-title {
+      margin-bottom: 7px;
+      color: var(--gold);
+      opacity: 1;
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+
+    .landing-login .field {
+      margin-bottom: 16px;
+    }
+
+    .landing-login .field label {
+      color: #777;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+    }
+
+    .landing-login input {
+      border-radius: 3px;
+      padding: 15px;
+      background: #080808;
+      border: 1px solid #252525;
+      color: #fff;
+    }
+
+    .landing-login input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(216,180,90,.08);
+    }
+
+    .landing-login input::placeholder {
+      color: #555;
+    }
+
+    .open-analyzer {
+      width: 100%;
+      margin-top: 3px;
+      padding: 16px 18px;
+      border-radius: 3px;
+      background: var(--gold);
+      color: #080808;
+      font-weight: 1000;
+      letter-spacing: .8px;
+      transition: transform .2s ease, filter .2s ease;
+    }
+
+    .open-analyzer:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .open-analyzer span {
+      float: right;
+      font-size: 18px;
+      line-height: 13px;
+    }
+
+    .secure-note {
+      margin-top: 14px;
+      color: #666;
+      text-align: center;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.3px;
+    }
+
+    .secure-note span {
+      color: #62e59a;
+    }
+
+    .landing-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 28px 4px 0;
+      color: #4e4e4e;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.3px;
+    }
+
+    @media (max-width: 650px) {
+      .app {
+        width: min(94%, 560px);
+        padding-top: 14px;
+      }
+
+      .hero-copy {
+        padding-top: 42px;
+      }
+
+      .hero h1 {
+        font-size: clamp(39px, 12vw, 58px);
+        letter-spacing: -2px;
+      }
+
+      .hero-copy p {
+        font-size: 13px;
+      }
+
+      .hero-features {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-features div {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.09);
+      }
+
+      .hero-features div:last-child {
+        border-bottom: 0;
+      }
+
+      .landing-login {
+        margin-top: 22px;
+        padding: 21px;
+      }
+
+      .landing-footer {
+        flex-wrap: wrap;
+      }
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -490,22 +812,40 @@
 
 <div class="app">
 
-  <header class="header">
-    <div class="brand">DERIV LIVE ENTRY</div>
-    <div class="powered">POWERED BY ELISY 254</div>
+  <header class="hero">
+    <div class="hero-top">
+      <div class="brand-mark">E254</div>
+      <div class="live-pill"><span></span> DERIV LIVE DATA</div>
+    </div>
+
+    <div class="hero-copy">
+      <div class="eyebrow">ELISY 254 • PRECISION ENTRY ENGINE</div>
+      <h1>READ THE MARKET.<br><strong>ENTER WITH CONFIDENCE.</strong></h1>
+      <p>Live Deriv tick analysis, digit momentum and confirmed entry signals in one focused trading workspace.</p>
+    </div>
+
+    <div class="hero-features">
+      <div><b>01</b><span>LIVE TICKS</span></div>
+      <div><b>02</b><span>MOMENTUM</span></div>
+      <div><b>03</b><span>ENTRY SIGNALS</span></div>
+    </div>
   </header>
 
   <!-- LOGIN -->
 
-  <section id="loginSection" class="card login-card">
+  <section id="loginSection" class="card login-card landing-login">
 
-    <div class="section-title">
-      LOGIN
+    <div class="login-heading">
+      <div>
+        <div class="section-title">PRIVATE ACCESS</div>
+        <h2>Open your analyzer</h2>
+        <p>Enter your access details to continue to the live market engine.</p>
+      </div>
+      <div class="access-icon">↗</div>
     </div>
 
     <div class="field">
-      <label>Market</label>
-
+      <label>MARKET ACCESS</label>
       <input
         id="loginMarket"
         placeholder="Enter Market"
@@ -514,8 +854,7 @@
     </div>
 
     <div class="field">
-      <label>Password</label>
-
+      <label>ACCESS PASSWORD</label>
       <input
         id="loginPassword"
         type="password"
@@ -524,19 +863,23 @@
       />
     </div>
 
-    <button
-      id="loginButton"
-      style="width:100%"
-    >
-      OPEN ANALYZER
+    <button id="loginButton" class="open-analyzer">
+      ENTER LIVE ANALYZER <span>→</span>
     </button>
 
-    <div
-      id="loginMessage"
-      class="message"
-    ></div>
+    <div class="secure-note">
+      <span>●</span> LIVE CONNECTION • DERIV MARKET DATA
+    </div>
+
+    <div id="loginMessage" class="message"></div>
 
   </section>
+
+  <div class="landing-footer">
+    <span>ELISY 254</span>
+    <span>LIVE ENTRY ENGINE</span>
+    <span>TRADE RESPONSIBLY</span>
+  </div>
 
 
   <!-- MAIN APP -->
