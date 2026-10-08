@@ -719,18 +719,11 @@ function connectDeriv(
      * Only reconnect when somebody
      * actually needs market data.
      */
-    if (
-      browserClients.size > 0 ||
-      symbolSubscriptions.size >
-        0
-    ) {
-      broadcast({
-        type:
-          "deriv_reconnecting"
-      });
-
-      scheduleDerivReconnect();
-    }
+    /*
+     * Do not automatically reconnect Deriv.
+     * A new connection is created only when the
+     * application explicitly requests market data.
+     */
   });
 }
 
