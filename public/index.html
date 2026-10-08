@@ -1500,7 +1500,9 @@ let pendingStart = false;
 let intentionalSocketClose = false;
 
 const MAX_DIGITS = 100;
-const MIN_TICKS_FOR_ANALYSIS = 60;
+const MIN_TICKS_FOR_ANALYSIS = 40;
+const FAST_HISTORY_TICKS = 80;
+let noSignalShown = false;
 const SIGNAL_SCORE_THRESHOLD = 82;
 const MIN_TOP_DIGIT_RATE = 16;
 const MIN_EDGE_OVER_BASE = 5;
@@ -1990,6 +1992,39 @@ async function connectBrowserSocket() {
      * Convert Deriv's native messages into the small internal
      * messages already used by the entry engine.
      */
+    if (data.msg_type === "history") {
+      if (!running || !currentSymbol) {
+        return;
+      }
+
+      const historyPrices = Array.isArray(data.history)
+        ? data.history
+        : [];
+
+      if (!historyPrices.length) {
+        return;
+      }
+
+      /*
+       * Fast-start: Deriv provides historical ticks through the
+       * public market-data WebSocket, so the engine does not need
+       * to sit and wait for 40+ new live ticks before analysing.
+       */
+      historyPrices.forEach(quote => {
+        processTick({
+          type: "tick",
+          market: currentMarket,
+          symbol: currentSymbol,
+          quote,
+          epoch: null,
+          pipSize: Number(data.pip_size || 0),
+          precision: currentPrecision
+        });
+      });
+
+      return;
+    }
+
     if (data.msg_type === "active_symbols") {
       const symbols = Array.isArray(data.active_symbols)
         ? data.active_symbols
@@ -2709,6 +2744,7 @@ function startMarket() {
   currentPrecision = null;
 
   running = true;
+  noSignalShown = false;
 
   setEntryDigitAnimation(true);
   clearEntryDigitHighlights();
@@ -2758,11 +2794,25 @@ function startMarket() {
       "wait"
     );
 
+    /*
+     * Load recent ticks first for a fast signal, then keep the
+     * live subscription running for fresh entries.
+     */
+    socket.send(
+      JSON.stringify({
+        ticks_history: symbol,
+        count: FAST_HISTORY_TICKS,
+        end: "latest",
+        style: "ticks",
+        req_id: Date.now()
+      })
+    );
+
     socket.send(
       JSON.stringify({
         ticks: symbol,
         subscribe: 1,
-        req_id: Date.now()
+        req_id: Date.now() + 1
       })
     );
 
@@ -2866,6 +2916,10 @@ stopButton.addEventListener(
 
 function processTick(data) {
 
+  if (!running) {
+    return;
+  }
+
   ticks.push(data);
 
   if (
@@ -2929,6 +2983,49 @@ function processTick(data) {
   ) {
 
     analyzeForEntry();
+
+    /*
+     * Once the fast history + live sample is large enough and no
+     * contract qualifies, stop waiting on this market. The user
+     * gets a clear instruction to change the market instead of
+     * watching an endless WAIT state.
+     */
+    if (
+      digits.length >= FAST_HISTORY_TICKS &&
+      !currentSignal &&
+      !noSignalShown
+    ) {
+      noSignalShown = true;
+      running = false;
+
+      clearTimer();
+      setEntryDigitAnimation(false);
+      clearEntryDigitHighlights();
+
+      startButton.disabled = false;
+      startButton.textContent = "START";
+      startButton.classList.remove("stop");
+      startButton.classList.add("start");
+
+      marketSelect.disabled = false;
+      contractSelect.disabled = false;
+
+      setConnectionStatus("NO SIGNAL", "wait");
+      setEntryCenter("ENTRY", "NO SIGNAL", false);
+
+      entryContract.textContent =
+        "NO SIGNAL FOUND • CHANGE MARKET";
+
+      reason.textContent =
+        "No confirmed entry was found in the fast live sample. Change market and press START.";
+
+      manualHelp.textContent =
+        "Change market for a fresh analysis.";
+
+      showDontTrade(
+        "NO SIGNAL FOUND • CHANGE MARKET"
+      );
+    }
   }
 }
 
@@ -3890,6 +3987,7 @@ function resetAnalysis() {
 
   ticks = [];
   digits = [];
+  noSignalShown = false;
 
   tickCount.textContent =
     "0";
