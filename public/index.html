@@ -3632,10 +3632,7 @@ function createEntrySignal({
     contract === "UNDER"
   ) {
 
-    const barrier =
-      Number(
-        barrierSelect.value
-      );
+    const barrier = Number(predictedDigits[0]);
 
     prediction.textContent =
       `${contract} ${barrier}`;
