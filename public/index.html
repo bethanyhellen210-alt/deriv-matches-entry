@@ -1711,43 +1711,6 @@ async function connectBrowserSocket() {
 }
 
 
-/* =========================================================
-   AUTOMATIC RECONNECT
-========================================================= */
-
-function scheduleReconnect() {
-
-  if (!loggedIn) {
-    return;
-  }
-
-  if (reconnectTimer) {
-    return;
-  }
-
-  reconnectAttempts++;
-
-  const delay =
-    Math.min(
-      1000 * Math.pow(2, reconnectAttempts - 1),
-      10000
-    );
-
-  setConnectionStatus(
-    `RECONNECTING IN ${Math.ceil(delay / 1000)}s`,
-    "wait"
-  );
-
-  reconnectTimer =
-    setTimeout(() => {
-
-      reconnectTimer = null;
-
-      connectBrowserSocket();
-
-    }, delay);
-}
-
 
 /* =========================================================
    SERVER MESSAGES
