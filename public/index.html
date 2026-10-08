@@ -953,7 +953,19 @@
     .entry-center-value.confirmed {
       color: #f2d47c;
       text-shadow: 0 0 18px rgba(242,212,124,.55);
+      animation: entryCenterPulse 1.15s ease-in-out infinite;
       transform: scale(1.08);
+    }
+
+    @keyframes entryCenterPulse {
+      0%,100% {
+        transform: scale(1);
+        text-shadow: 0 0 12px rgba(242,212,124,.35);
+      }
+      50% {
+        transform: scale(1.08);
+        text-shadow: 0 0 26px rgba(242,212,124,.8);
+      }
     }
 
     .entry-center-value.waiting {
