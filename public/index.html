@@ -1244,11 +1244,9 @@ async function login() {
    BROWSER WEBSOCKET
 ========================================================= */
 
-async function connectBrowserSocket() {
+async async function connectBrowserSocket() {
 
-  if (!loggedIn) {
-    return;
-  }
+  if (!loggedIn) return;
 
   if (
     socket &&
@@ -1262,21 +1260,12 @@ async function connectBrowserSocket() {
 
   intentionalSocketClose = false;
   clearTimeout(reconnectTimer);
-
-  setConnectionStatus(
-    "CONNECTING",
-    "wait"
-  );
+  setConnectionStatus("CONNECTING", "wait");
 
   try {
-    /*
-     * The server requires a short-lived one-time
-     * WebSocket token. Do not connect to the host root.
-     */
     const tokenResponse = await fetch("/api/ws-token", {
       credentials: "same-origin"
     });
-
     const tokenData = await tokenResponse.json().catch(() => ({}));
 
     if (!tokenResponse.ok || !tokenData.token) {
@@ -1286,21 +1275,14 @@ async function connectBrowserSocket() {
     }
 
     const protocol =
-      location.protocol === "https:"
-        ? "wss"
-        : "ws";
+      location.protocol === "https:" ? "wss" : "ws";
 
     socket = new WebSocket(
       `${protocol}://${location.host}/ws?token=${encodeURIComponent(tokenData.token)}`
     );
   } catch (error) {
     console.error("WebSocket setup error:", error);
-
-    setConnectionStatus(
-      "CONNECTION ERROR",
-      "wait"
-    );
-
+    setConnectionStatus("CONNECTION ERROR", "wait");
     return;
   }
 
@@ -1314,62 +1296,41 @@ async function connectBrowserSocket() {
     );
 
     try {
-
       socket.send(
         JSON.stringify({
           action: "markets"
         })
       );
 
-      /*
-       * If START was pressed while the socket was
-       * still connecting, start now.
-       */
       if (pendingStart) {
-
         pendingStart = false;
 
         setTimeout(() => {
-
           if (
             socket &&
             socket.readyState === WebSocket.OPEN
           ) {
             startMarket();
           }
-
         }, 0);
       }
-
     } catch (error) {
-
-      console.error(
-        "Socket open/send error:",
-        error
-      );
+      console.error("Socket open/send error:", error);
     }
-
   });
 
-
   socket.addEventListener("message", (event) => {
-
     let data;
 
     try {
       data = JSON.parse(event.data);
     } catch (error) {
-      console.warn(
-        "Invalid WebSocket message:",
-        event.data
-      );
+      console.warn("Invalid WebSocket message:", event.data);
       return;
     }
 
     handleServerMessage(data);
-
   });
-
 
   socket.addEventListener("close", () => {
 
@@ -1381,37 +1342,28 @@ async function connectBrowserSocket() {
     currentSymbol = "";
 
     if (running) {
-
       showDontTrade(
         "Connection lost. Don't trade until the live market connection returns."
       );
 
       stopCurrentSignal();
       clearTimer();
-
     }
 
     /*
-     * No automatic reconnect loop.
-     * The user can press START again after a real
-     * connection failure.
+     * Deliberately no automatic reconnect.
+     * A new connection is made only by an explicit
+     * user action such as START.
      */
-
   });
 
-
   socket.addEventListener("error", (error) => {
-
-    console.error(
-      "Browser WebSocket error:",
-      error
-    );
+    console.error("Browser WebSocket error:", error);
 
     setConnectionStatus(
       "CONNECTION ERROR",
       "wait"
     );
-
   });
 }
 
