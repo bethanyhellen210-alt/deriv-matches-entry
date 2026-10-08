@@ -1784,7 +1784,7 @@ function showEntryDigits(predictedDigits) {
   // The prediction is displayed only in the exact center
   // of the circular entry dial.
   setEntryCenter(
-    "ENTRY",
+    "GOOD DIGIT",
     String(strongest),
     true
   );
@@ -3297,11 +3297,8 @@ function analyzeForEntry() {
 
   createEntrySignal({
     contract,
-    digits:
-      top.map(
-        item =>
-          item.digit
-      ),
+    // Show only the single strongest qualified digit from 0-9.
+    digits: [strongest.digit],
     score,
     reason:
       analysisReason
@@ -3373,7 +3370,7 @@ function createEntrySignal({
 
 
   entryContract.textContent =
-    contract;
+    contract + " • DIGIT " + predictedDigits[0];
 
 
   if (
