@@ -2213,15 +2213,30 @@ process.on(
 |--------------------------------------------------------------------------
 */
 
-server.listen(
-  PORT,
-  () => {
-    console.log(
-      `DERIV LIVE ENTRY running on port ${PORT}`
-    );
+/*
+|--------------------------------------------------------------------------
+| Vercel / Node entrypoint
+|--------------------------------------------------------------------------
+|
+| Vercel can run this Express + ws HTTP server directly. Export the
+| server so the runtime can attach HTTP/WebSocket traffic to it.
+| The port listener is retained for normal Node/Render deployments.
+|--------------------------------------------------------------------------
+*/
 
-    console.log(
-      "[DERIV] Waiting for a market-data request before connecting."
-    );
-  }
-);
+module.exports = server;
+
+if (require.main === module) {
+  server.listen(
+    PORT,
+    () => {
+      console.log(
+        `DERIV LIVE ENTRY running on port ${PORT}`
+      );
+
+      console.log(
+        "[DERIV] Waiting for a market-data request before connecting."
+      );
+    }
+  );
+}
