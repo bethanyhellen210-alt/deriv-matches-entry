@@ -3230,6 +3230,85 @@ function analyzeForEntry() {
   const recentRates = recentCounts.map(c => (c / recent.length) * 100);
   const previousRates = previousCounts.map(c => (c / previous.length) * 100);
 
+  /*
+   * OVER / UNDER group-entry logic.
+   *
+   * OVER b is supported when every digit 0..b is below 10.4%.
+   * Example: OVER 3 => 0,1,2,3 are each below 10.4%.
+   *
+   * UNDER b is supported when every digit b..9 is below 10.5%.
+   * Example: UNDER 6 => 6,7,8,9 are each below 10.5%.
+   *
+   * The barrier is selected automatically from the live sample.
+   * We do not require the individual low-side digits to be
+   * "strong"; their weakness is the confirmation for the group.
+   */
+  const contract = contractSelect.value;
+
+  if (contract === "OVER" || contract === "UNDER") {
+    const threshold = contract === "OVER" ? 10.4 : 10.5;
+    let selectedBarrier = null;
+
+    if (contract === "OVER") {
+      for (let barrier = 1; barrier <= 8; barrier++) {
+        const group = Array.from(
+          { length: barrier + 1 },
+          (_, digit) => digit
+        );
+
+        if (group.every(digit => fullRates[digit] < threshold)) {
+          selectedBarrier = barrier;
+        }
+      }
+    } else {
+      for (let barrier = 1; barrier <= 8; barrier++) {
+        const group = Array.from(
+          { length: 10 - barrier },
+          (_, index) => barrier + index
+        );
+
+        if (group.every(digit => fullRates[digit] < threshold)) {
+          selectedBarrier = barrier;
+          break;
+        }
+      }
+    }
+
+    if (selectedBarrier === null) {
+      return;
+    }
+
+    const groupDigits =
+      contract === "OVER"
+        ? Array.from({ length: selectedBarrier + 1 }, (_, digit) => digit)
+        : Array.from({ length: 10 - selectedBarrier }, (_, index) => selectedBarrier + index);
+
+    const groupRates = groupDigits.map(digit => fullRates[digit]);
+    const groupAverage =
+      groupRates.reduce((sum, rate) => sum + rate, 0) / groupRates.length;
+    const groupMargin = threshold - Math.max(...groupRates);
+
+    const score = Math.min(
+      95,
+      Math.max(
+        70,
+        70 + groupMargin * 8 + Math.max(0, 10 - groupAverage) * 2
+      )
+    );
+
+    createEntrySignal({
+      contract,
+      digits: [selectedBarrier],
+      score,
+      reason:
+        contract === "OVER"
+          ? `OVER ${selectedBarrier}: digits ${groupDigits.join(",")} are all below ${threshold.toFixed(1)}%.`
+          : `UNDER ${selectedBarrier}: digits ${groupDigits.join(",")} are all below ${threshold.toFixed(1)}%.`
+    });
+
+    return;
+  }
+
   // Require the same leading digit to remain present across
   // consecutive live windows. This prevents a single burst of
   // ticks from being presented as a prediction.
@@ -3249,10 +3328,6 @@ function analyzeForEntry() {
   if (!stableCandidates.length) {
     return;
   }
-
-
-  const contract =
-    contractSelect.value;
 
 
   let candidates = [];
@@ -3534,10 +3609,22 @@ function createEntrySignal({
     score.toFixed(0);
 
 
-  entryContract.textContent =
-    contract === "MATCHES"
-      ? "MATCHES • EXACT DIGIT " + predictedDigits[0]
-      : contract + " • DIGIT " + predictedDigits[0];
+  if (contract === "OVER" || contract === "UNDER") {
+    const barrier = predictedDigits[0];
+    const groupDigits =
+      contract === "OVER"
+        ? Array.from({ length: barrier + 1 }, (_, digit) => digit)
+        : Array.from({ length: 10 - barrier }, (_, index) => barrier + index);
+
+    entryContract.textContent =
+      contract + " " + barrier +
+      " • DIGITS " + groupDigits.join(",") + " BELOW THRESHOLD";
+  } else {
+    entryContract.textContent =
+      contract === "MATCHES"
+        ? "MATCHES • EXACT DIGIT " + predictedDigits[0]
+        : contract + " • DIGIT " + predictedDigits[0];
+  }
 
 
   if (
