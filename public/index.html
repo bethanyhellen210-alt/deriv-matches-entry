@@ -912,10 +912,13 @@
     }
 
     .entry-center {
-      position: relative;
+      position: absolute;
       z-index: 5;
       width: 132px;
       height: 132px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       border-radius: 50%;
       display: grid;
       place-items: center;
@@ -929,6 +932,7 @@
         0 0 38px rgba(44,152,238,.35),
         inset 0 0 28px rgba(44,152,238,.12);
       text-align: center;
+      pointer-events: none;
     }
 
     .entry-center-label {
@@ -949,6 +953,7 @@
     .entry-center-value.confirmed {
       color: #f2d47c;
       text-shadow: 0 0 18px rgba(242,212,124,.55);
+      transform: scale(1.08);
     }
 
     .entry-center-value.waiting {
@@ -1182,6 +1187,9 @@
       .entry-center {
         width: 104px;
         height: 104px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
       }
 
       .entry-center-value {
@@ -1951,6 +1959,7 @@ function showEntryDigits(predictedDigits) {
     : [];
 
   if (!list.length) {
+    setEntryCenter("ENTRY", "WAIT", false);
     return;
   }
 
@@ -1974,6 +1983,8 @@ function showEntryDigits(predictedDigits) {
 
   const strongest = list[0];
 
+  // The prediction is displayed only in the exact center
+  // of the circular entry dial.
   setEntryCenter(
     "ENTRY",
     String(strongest),
