@@ -1506,6 +1506,15 @@ const MIN_TOP_DIGIT_RATE = 16;
 const MIN_EDGE_OVER_BASE = 5;
 const MIN_TOP_MARGIN = 3;
 
+// MATCHES is the exact-last-digit contract, so use a stricter
+// confirmation gate. Never present a weak statistical fluctuation
+// as a "sure" entry.
+const MATCHES_MIN_TICKS = 100;
+const MATCHES_MIN_FULL_RATE = 18;
+const MATCHES_MIN_WINDOW_RATE = 20;
+const MATCHES_MIN_EDGE = 8;
+const MATCHES_MIN_MARGIN = 4;
+
 
 /* =========================================================
    DOM
@@ -3333,10 +3342,10 @@ function analyzeForEntry() {
     }
 
     candidates =
-      validatedRanked.slice(0, 3);
+      validatedRanked.slice(0, 1);
 
     analysisReason =
-      "These digits currently have the strongest live momentum for a MATCHES setup.";
+      "MATCHES requires one exact digit with strong, stable live evidence. No signal is shown until the stricter confirmation gate passes.";
   }
 
 
@@ -3344,14 +3353,58 @@ function analyzeForEntry() {
     return;
   }
 
+  /*
+   * MATCHES needs an exact digit, so it gets a much harder gate
+   * than EVEN/ODD/OVER/UNDER/DIFFERS.
+   *
+   * We require:
+   * - 100+ live ticks
+   * - the same leading digit in two consecutive 20-tick windows
+   * - >=20% in each window
+   * - >=18% across the full sample
+   * - >=8 percentage points above the 10% baseline
+   * - >=4 percentage points over the next candidate
+   *
+   * If any condition fails, MATCHES stays WAIT.
+   */
+  if (contract === "MATCHES") {
+    if (digits.length < MATCHES_MIN_TICKS) {
+      return;
+    }
+
+    const matchRanked = ranked.filter(item =>
+      fullRates[item.digit] >= MATCHES_MIN_FULL_RATE &&
+      recentRates[item.digit] >= MATCHES_MIN_WINDOW_RATE &&
+      previousRates[item.digit] >= MATCHES_MIN_WINDOW_RATE
+    );
+
+    if (!matchRanked.length) {
+      return;
+    }
+
+    const matchStrongest = matchRanked[0];
+    const matchSecond = matchRanked[1];
+
+    const matchEdge = fullRates[matchStrongest.digit] - 10;
+    const matchMargin = matchSecond
+      ? fullRates[matchStrongest.digit] - fullRates[matchSecond.digit]
+      : fullRates[matchStrongest.digit];
+
+    if (
+      matchEdge < MATCHES_MIN_EDGE ||
+      matchMargin < MATCHES_MIN_MARGIN
+    ) {
+      return;
+    }
+
+    candidates = [matchStrongest];
+  }
 
   const top =
     candidates.slice(0, 3);
 
-
   const strongest =
     top[0];
-
 
   const second =
     top[1];
@@ -3370,6 +3423,17 @@ function analyzeForEntry() {
     strongestRate < MIN_TOP_DIGIT_RATE ||
     edgeOverBaseline < MIN_EDGE_OVER_BASE ||
     (second && strongestRate - secondRate < MIN_TOP_MARGIN)
+  ) {
+    return;
+  }
+
+  if (
+    contract === "MATCHES" &&
+    (
+      strongestRate < MATCHES_MIN_FULL_RATE ||
+      edgeOverBaseline < MATCHES_MIN_EDGE ||
+      (second && strongestRate - secondRate < MATCHES_MIN_MARGIN)
+    )
   ) {
     return;
   }
@@ -3476,7 +3540,9 @@ function createEntrySignal({
 
 
   entryContract.textContent =
-    contract + " • DIGIT " + predictedDigits[0];
+    contract === "MATCHES"
+      ? "MATCHES • EXACT DIGIT " + predictedDigits[0]
+      : contract + " • DIGIT " + predictedDigits[0];
 
 
   if (
